@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+    </head>
+    <body>
+        <h1>Todo List</h1>
+        <form id="todo-form">
+            <input id="todo-text" type="text">
+        </form>
+        <script>
+            const form = document.querySelector('#todo-form');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                let todoText = document.querySelector('#todo-text').value;
+                console.log(todoText);
+                let newTodo = `<input type="checkbox"><span>${todoText}</span>`;
+                form.insertAdjacentHTML('afterend', newTodo);
+            });
+        </script>
+    </body>
+
+</html>
