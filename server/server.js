@@ -77,7 +77,7 @@ function authLogic(req, res, next) {
 app.use(authLogic);
 */
 
-app.use(express.static(path.resolve(`${__dirname}/../client`), {index: 'index.html'}));
+app.use(express.static(path.resolve(`${__dirname}/../client`), {index: 'dashboard.html'}));
 
 
 
@@ -105,22 +105,37 @@ io.use(function(socket, next) {
 });
 */
 let documents = [];
+let courses = {};
 io.on('connection', (sock) => {
     console.log("someone connected.")
     sock.on('send-changes', (delta) => {
         console.log(delta)
         sock.broadcast.emit("receive-changes", delta);
     });
-    sock.on('new-doc', (title) => {
-        documents.push(title);
+    sock.on('new-course', (title) => {
+        console.log(title);
+        courses[title] = {
+            documents: [],
+        }
+        app.use(`/${title}`, (req, res) => {
+            res.sendFile(path.resolve(`${__dirname}/../client/course.html`));
+        });
+    })
+    sock.on('new-doc', ({course, title}) => {
+        console.log(course);
+        courses[course].documents.push(title);
         sock.join(title);
         console.log(title);
         app.use(`/${title}`, (req, res) => {
             res.sendFile(path.resolve(`${__dirname}/../client/index.html`));
         });
     });
-    sock.on('get-doc-list', () => {
-        sock.emit('send-doc-list', documents);
+    sock.on('get-doc-list', (course) => {
+        console.log(course);
+        sock.emit('send-doc-list', courses[course].documents);
+    });
+    sock.on('get-course-list', () => {
+        sock.emit('send-course-list', courses);
     });
 });
 

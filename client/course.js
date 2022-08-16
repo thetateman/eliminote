@@ -1,5 +1,6 @@
 (() => {
-    localStorage.clear();
+    let location = window.location.href.split("/")[window.location.href.split("/").length - 1];
+    localStorage.currentCourse = location;
     const sock = io();
     const form = document.querySelector('#todo-form');
     form.addEventListener('submit', (e) => {
@@ -9,21 +10,21 @@
         let newTodo = `<input type="checkbox"><span>${todoText}</span>`;
         form.insertAdjacentHTML('afterend', newTodo);
     });
-    const newCourseButton = document.getElementById('new-course');
-    newCourseButton.addEventListener('submit', (e) => {
+    const newDocButton = document.getElementById('new-doc');
+    newDocButton.addEventListener('submit', (e) => {
         e.preventDefault();
         const title = document.getElementById('title-input').value;
         console.log(`got title: ${title}`)
-        document.getElementById('course-list').insertAdjacentHTML('beforeend', `<a href="/${title}">${title}</a><br>`)
-        sock.emit('new-course', title);
+        document.getElementById('doc-list').insertAdjacentHTML('beforeend', `<a href="/${title}">${title}</a><br>`)
+        sock.emit('new-doc', {course: localStorage.currentCourse, title: title});
     });
-    sock.on('send-course-list', (courses) => {
-        Object.keys(courses).forEach((courseTitle) => {
-            document.getElementById('course-list').insertAdjacentHTML('beforeend', `<a href="/${courseTitle}">${courseTitle}</a><br>`)
+    sock.on('send-doc-list', (documents) => {
+        documents.forEach((doc) => {
+            document.getElementById('doc-list').insertAdjacentHTML('beforeend', `<a href="/${doc}">${doc}</a><br>`)
         });
     });
 
-    sock.emit('get-course-list', '');
+    sock.emit('get-doc-list', localStorage.currentCourse);
     // Force reload when page is accessed with the back button.
     window.addEventListener('pageshow', (event) => {
         if (event.persisted) {
@@ -31,4 +32,5 @@
           window.location.reload();
         }
     });
+    
 })();
