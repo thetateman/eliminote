@@ -126,7 +126,7 @@ io.on('connection', (sock) => {
         courses[course].documents.push(title);
         sock.join(title);
         console.log(title);
-        app.use(`/${title}`, (req, res) => {
+        app.use(`/${course}-${title}`, (req, res) => {
             res.sendFile(path.resolve(`${__dirname}/../client/index.html`));
         });
     });
