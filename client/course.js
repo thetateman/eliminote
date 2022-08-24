@@ -1,6 +1,6 @@
 (() => {
-    let location = window.location.href.split("/")[window.location.href.split("/").length - 1];
-    localStorage.currentCourse = location;
+    let location = window.location.href.split("CourseView_")[window.location.href.split("CourseView_").length - 1];
+    localStorage.currentCourse = decodeURIComponent(location);
     const sock = io();
     const form = document.querySelector('#todo-form');
     form.addEventListener('submit', (e) => {
@@ -15,12 +15,12 @@
         e.preventDefault();
         const title = document.getElementById('title-input').value;
         console.log(`got title: ${title}`)
-        document.getElementById('doc-list').insertAdjacentHTML('beforeend', `<a href="/${localStorage.currentCourse}-${title}">${title}</a><br>`)
+        document.getElementById('doc-list').insertAdjacentHTML('beforeend', `<a href="/${encodeURIComponent(localStorage.currentCourse)}_DocumentView_${encodeURIComponent(title)}">${title}</a><br>`)
         sock.emit('new-doc', {course: localStorage.currentCourse, title: title});
     });
     sock.on('send-doc-list', (documents) => {
         documents.forEach((doc) => {
-            document.getElementById('doc-list').insertAdjacentHTML('beforeend', `<a href="/${localStorage.currentCourse}-${doc}">${doc}</a><br>`)
+            document.getElementById('doc-list').insertAdjacentHTML('beforeend', `<a href="/${encodeURIComponent(localStorage.currentCourse)}_DocumentView_${encodeURIComponent(doc)}">${doc}</a><br>`)
         });
     });
 

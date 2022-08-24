@@ -9,12 +9,26 @@ const mongoose = require('mongoose');
 const session = require('express-session');
 const helmet = require('helmet');
 
+const Document = require('./models/document.js');
+
 //const MongoStore = require('connect-mongo')(session);
 
 //require('dotenv').config();
 //const verbose = (process.env.VERBOSE === 'true');
 
 //const connection = mongoose.createConnection(process.env.RESTREVIEWS_DB_URI);
+
+mongoose.connect('mongodb://127.0.0.1:27017/eliminote');
+
+async function findOrCreateDocument(id) {
+    if(id == null) return
+
+    const defaultValue = "";
+    const document = await Document.findById(id);
+    if(document) return document;
+    return await Document.create({ _id: id, data: defaultValue})
+}
+
 
 const app = express();
 //app.use(cors())
@@ -108,25 +122,23 @@ let documents = [];
 let courses = {};
 io.on('connection', (sock) => {
     console.log("someone connected.")
-    sock.on('send-changes', (delta) => {
+    sock.on('send-changes', ({delta, course, title}) => {
         console.log(delta)
-        sock.broadcast.emit("receive-changes", delta);
+        sock.broadcast.to(`${course}/${title}`).emit("receive-changes", delta);
     });
     sock.on('new-course', (title) => {
         console.log(title);
         courses[title] = {
             documents: [],
         }
-        app.use(`/${title}`, (req, res) => {
+        app.use(`/CourseView_${encodeURIComponent(title)}`, (req, res) => {
             res.sendFile(path.resolve(`${__dirname}/../client/course.html`));
         });
+
     })
     sock.on('new-doc', ({course, title}) => {
-        console.log(course);
         courses[course].documents.push(title);
-        sock.join(title);
-        console.log(title);
-        app.use(`/${course}-${title}`, (req, res) => {
+        app.use(`/${encodeURIComponent(course)}_DocumentView_${encodeURIComponent(title)}`, (req, res) => {
             res.sendFile(path.resolve(`${__dirname}/../client/index.html`));
         });
     });
@@ -137,6 +149,15 @@ io.on('connection', (sock) => {
     sock.on('get-course-list', () => {
         sock.emit('send-course-list', courses);
     });
+    sock.on('get-doc', async ({course, title}) => {
+        const doc = await findOrCreateDocument(`${course}/${title}`);
+        sock.join(`${course}/${title}`);
+        sock.emit('load-document', doc.data);
+        sock.on('save-doc', async data => {
+            await Document.findByIdAndUpdate(`${course}/${title}`, {data});
+        });
+    });
+    
 });
 
 

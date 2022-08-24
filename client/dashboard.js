@@ -14,12 +14,12 @@
         e.preventDefault();
         const title = document.getElementById('title-input').value;
         console.log(`got title: ${title}`)
-        document.getElementById('course-list').insertAdjacentHTML('beforeend', `<a href="/${title}">${title}</a><br>`)
+        document.getElementById('course-list').insertAdjacentHTML('beforeend', `<a href="/CourseView_${encodeURIComponent(title)}">${title}</a><br>`)
         sock.emit('new-course', title);
     });
     sock.on('send-course-list', (courses) => {
         Object.keys(courses).forEach((courseTitle) => {
-            document.getElementById('course-list').insertAdjacentHTML('beforeend', `<a href="/${courseTitle}">${courseTitle}</a><br>`)
+            document.getElementById('course-list').insertAdjacentHTML('beforeend', `<a href="/CourseView_${encodeURIComponent(courseTitle)}">${courseTitle}</a><br>`)
         });
     });
 
