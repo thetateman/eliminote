@@ -20,13 +20,12 @@ const Document = require('./models/document.js');
 
 mongoose.connect('mongodb://127.0.0.1:27017/eliminote');
 
-async function findOrCreateDocument(id) {
-    if(id == null) return
-
+async function findOrCreateDocument(user, course, title) {
     const defaultValue = "";
+    const id = `${course}/${title}`;
     const document = await Document.findById(id);
     if(document) return document;
-    return await Document.create({ _id: id, data: defaultValue})
+    return await Document.create({ _id: id, user: "testusername", course: course, data: defaultValue})
 }
 
 
@@ -150,7 +149,7 @@ io.on('connection', (sock) => {
         sock.emit('send-course-list', courses);
     });
     sock.on('get-doc', async ({course, title}) => {
-        const doc = await findOrCreateDocument(`${course}/${title}`);
+        const doc = await findOrCreateDocument('testuser', course, title);
         sock.join(`${course}/${title}`);
         sock.emit('load-document', doc.data);
         sock.on('save-doc', async data => {
