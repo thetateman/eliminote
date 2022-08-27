@@ -10,6 +10,29 @@ const session = require('express-session');
 const helmet = require('helmet');
 
 const Document = require('./models/document.js');
+const apiRouter = require("./api/api.router.js");
+
+const MongoStore = require('connect-mongo')(session);
+
+const connection = mongoose.createConnection('mongodb://127.0.0.1:27017/eliminote');
+
+const sessionStore = new MongoStore({
+    mongooseConnection: connection,
+    collection: 'sessions'
+});
+
+const sessionMiddleware = session({
+    secret: 'some secret', //TODO: CHANGE THIS
+    resave: false,
+    saveUninitialized: true,
+    store: sessionStore,
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24
+    }
+});
+
+
+
 
 //const MongoStore = require('connect-mongo')(session);
 
@@ -17,8 +40,6 @@ const Document = require('./models/document.js');
 //const verbose = (process.env.VERBOSE === 'true');
 
 //const connection = mongoose.createConnection(process.env.RESTREVIEWS_DB_URI);
-
-mongoose.connect('mongodb://127.0.0.1:27017/eliminote');
 
 async function findOrCreateDocument(user, course, title) {
     const defaultValue = "";
@@ -45,27 +66,10 @@ app.use(helmet.contentSecurityPolicy({
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
-/*
-const sessionStore = new MongoStore({
-    mongooseConnection: connection,
-    collection: 'sessions'
-});
-
-const sessionMiddleware = session({
-    secret: 'some secret', //TODO: CHANGE THIS
-    resave: false,
-    saveUninitialized: true,
-    store: sessionStore,
-    cookie: {
-        maxAge: 1000 * 60 * 60 * 24
-    }
-});
-
-
 app.use(sessionMiddleware);
-*/
 
-//app.use("/api", apiRouter);
+app.use("/api", apiRouter);
+
 app.get("/robots.txt", (req, res) => {
     res.sendFile(path.resolve(`${__dirname}/../robots.txt`));
 });
@@ -97,6 +101,9 @@ app.use(express.static(path.resolve(`${__dirname}/../client`), {index: 'dashboar
 app.use('/dashboard', (req, res) => {
     res.sendFile(path.resolve(`${__dirname}/../client/dashboard.html`));
 });
+app.use('/login', (req, res) => {
+    res.sendFile(path.resolve(`${__dirname}/../client/login.html`));
+});
 /*
 app.use('/lobby', (req, res) => {
     res.sendFile(path.resolve(`${__dirname}/../client/lobby.html`));
@@ -112,11 +119,11 @@ app.use('/game', (req, res) => {
 
 const server = http.createServer(app);
 const io = socketio(server);
-/*
+
 io.use(function(socket, next) {
     sessionMiddleware(socket.request, socket.request.res, next);
 });
-*/
+
 let documents = [];
 let courses = {};
 io.on('connection', (sock) => {
